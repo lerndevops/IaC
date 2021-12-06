@@ -3,9 +3,13 @@
   tasks:
     - name: Create EC2 Instances
       ec2:
-        key_name: naresh
+        key_name: ansible
         instance_type: t2.micro
-        image: ami-05c1fa8df71875112 
+        image: ami-0629230e074c580f2  # u18-ami-05c1fa8df71875112 
+        volumes:
+          - device_name: /dev/sda1
+            #delete_on_termination: true
+            volume_size: 12
         wait: yes
         group: mysecgroup
         count: "{{ count }}"
@@ -19,12 +23,16 @@
          tags:
            Name: "mu{{item.ami_launch_index}}"
       loop: "{{out.instances}}"
+      #- ec2_vol:
+      #   instance: "{{item.id}}"
+      #   volume_size: 12
+      #loop: "{{out.instances}}"
     - name: create in memory Inventory 
       add_host:
         hostname: "{{item.public_ip}}"
         groupname: myservers
         ansible_user: ubuntu
-        ansible_ssh_private_key_file: /root/IaC/naresh.pem
+        ansible_ssh_private_key_file: /root/IaC/ansible.pem
         ansible_python_interpreter: /usr/bin/python3
       loop: "{{out.instances}}"
     - name: wait 60 Sec for ssh 
@@ -48,10 +56,10 @@
     - name: clone git repo
       shell: git clone https://github.com/lerndevops/labs.git
       args:
-        chdir: /tmp
+        chdir: /opt
     - name: create user
-      shell: chmod -R 755 /tmp/labs/* ; /tmp/labs/cloud/setup-user.sh
+      shell: chmod -R 755 /opt/labs/* ; /opt/labs/cloud/setup-user.sh
     - name: setup hostname
-      shell: echo amaster > /etc/hostname
+      shell: echo master > /etc/hostname
     - name: reboot instances
       reboot:
